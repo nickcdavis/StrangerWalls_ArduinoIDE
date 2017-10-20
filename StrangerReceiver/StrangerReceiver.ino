@@ -6,20 +6,18 @@
 // How many leds in your strip?
 #define NUM_LEDS 100
 
-#define THINKING_PIN    1
 #define DATA_PIN    2
 #define BRIGHTNESS  255
 
 // Define the array of leds
 CRGB leds[NUM_LEDS];
-//                    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 String letterIndex = "A--B--C--D--E--F--G--H--I--J--K--L--M--N--O--P--Q--R--S--T--U--V--W--X--Y--Z----------------------";
 String colorLetterIndex = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-const char* ssid     = "MutantOtter";
-const char* password = "XMJ9JD9ER4";
-
-const char* host = "strangerwall.herokuapp.com";
+const char* ssid     = "";
+const char* password = "";
+const char* host = "";
 const char* url = "/nextMessage";
 
 // Number of milliseconds to wait without receiving any data before we give up
@@ -85,16 +83,6 @@ void setup() {
 void loop() {
   httpGet();
   delay(2000);
-  //  turnOnAll();
-  //  delay(2000);
-  //  fill_solid( leds, NUM_LEDS, CRGB::Black);
-  //
-  //  writeWord("RUN",1300,300);
-  //  turnOnAll();
-  //  flickerLeds(100);
-  //  allToFullBright();
-  //  turnOnAll();
-  //  delay(2000);
 }
 
 void httpGet()
@@ -107,19 +95,9 @@ void httpGet()
   err = http.get(host, url);
   if (err == 0)
   {
-    //    Serial.println("startedRequest ok");
-    //    delay(500);
-
     err = http.responseStatusCode();
     if (err >= 0)
     {
-      //      Serial.print("Got status code: ");
-      //      Serial.println(err);
-
-      // Usually you'd check that the response code is 200 or a
-      // similar "success" code (200-299) before carrying on,
-      // but we'll print out whatever response we get
-
       err = http.skipResponseHeaders();
       if (err >= 0)
       {
@@ -129,20 +107,13 @@ void httpGet()
         digitalWrite(0, LOW);
 
         int bodyLen = http.contentLength();
-        //        Serial.print("Content length is: ");
-        //        Serial.println(bodyLen);
-        //        Serial.println();
-        //        Serial.println("Body returned follows:");
 
-        // Now we've got to the body, so we can print it out
         unsigned long timeoutStart = millis();
-        //        String message = http.readStringUntil('\r');
-        //        Serial.print(message);
         char c;
         String compiledResult;
         bool isBody;
         isBody = false;
-        // Whilst we haven't timed out & haven't reached the end of the body
+
         while ( (http.connected() || http.available()) &&
                 ((millis() - timeoutStart) < kNetworkTimeout) )
         {
@@ -201,10 +172,6 @@ void httpGet()
     Serial.println(err);
   }
   http.stop();
-
-  // And just stop, now that we've tried a download
-  //  while(1);
-
 }
 
 void setupWifi() {
@@ -306,7 +273,7 @@ void allToFullBright()
   FastLED.show();
 }
 
-void flicker() {                          //-m9-FLICKER EFFECT
+void flicker() {
   int random_bright = random(0, 255);
   int random_delay = random(10, 100);
   int randomFullLight = random(0, 2);
