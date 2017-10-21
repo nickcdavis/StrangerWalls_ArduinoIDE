@@ -3,18 +3,14 @@
 #include <ESP8266WiFi.h>
 #include "FastLED.h"
 
-// How many leds in your strip?
 #define NUM_LEDS 100
-
 #define DATA_PIN    2
 #define BRIGHTNESS  255
 
-// Define the array of leds
 CRGB leds[NUM_LEDS];
 
-String letterIndex = "A--B--C--D--E--F--G--H--I--J--K--L--M--N--O--P--Q--R--S--T--U--V--W--X--Y--Z----------------------";
-String colorLetterIndex = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
+const String letterIndex = "A--B--C--D--E--F--G--H--I--J--K--L--M--N--O--P--Q--R--S--T--U--V--W--X--Y--Z----------------------";
+const String colorLetterIndex = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const char* ssid     = "";
 const char* password = "";
 const char* host = "";
@@ -63,18 +59,12 @@ uint32_t colorIndex[26] = {
 
 void setup() {
   Serial.begin(9600);
-  pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
-  digitalWrite(LED_BUILTIN, HIGH);
-
   delay(10000);
+  pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
   FastLED.addLeds<WS2811, DATA_PIN, RGB>(leds, NUM_LEDS);
   FastLED.setBrightness(BRIGHTNESS);
 
-  turnOnAll();
   flickerLeds(25);
-  allToFullBright();
-  fill_solid( leds, NUM_LEDS, CRGB::Black);
-  delay(2000);
   turnOnAll();
 
   setupWifi();
@@ -101,10 +91,7 @@ void httpGet()
       err = http.skipResponseHeaders();
       if (err >= 0)
       {
-        delay(250);
-        digitalWrite(0, HIGH);
-        delay(250);
-        digitalWrite(0, LOW);
+        blinkBoardLED();
 
         int bodyLen = http.contentLength();
 
@@ -126,18 +113,13 @@ void httpGet()
             }
             if (isBody)
             {
-              // Print out this character
               compiledResult += c;
             }
-
             bodyLen--;
-            // We read something, reset the timeout counter
             timeoutStart = millis();
           }
           else
           {
-            // We haven't got any data, so let's pause to allow some to
-            // arrive
             delay(kNetworkDelay);
           }
         }
@@ -145,10 +127,7 @@ void httpGet()
         compiledResult.toUpperCase();
         if (compiledResult != "")
         {
-          turnOnAll();
           flickerLeds(50);
-          fill_solid( leds, NUM_LEDS, CRGB::Black);
-          delay(2000);
           writeWord(compiledResult, 1300, 300);
           delay(2000);
           turnOnAll();
@@ -156,43 +135,43 @@ void httpGet()
       }
       else
       {
-        Serial.print("Failed to skip response headers: ");
-        Serial.println(err);
+        Serial.println("Failed to skip response headers: " + err);
       }
     }
     else
     {
-      Serial.print("Getting response failed: ");
-      Serial.println(err);
+      Serial.println("Getting response failed: " + err);
     }
   }
   else
   {
-    Serial.print("Connect failed: ");
-    Serial.println(err);
+    Serial.println("Connect failed: " + err);
   }
   http.stop();
 }
 
 void setupWifi() {
   delay(1000);
-  Serial.println();
-  Serial.print("Connecting: ");
-  Serial.println(ssid);
+  Serial.println("Connecting to: " + String(ssid));
 
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
+    blinkBoardLED();
+    Serial.print(".");
+  }
+  
+  Serial.println("");
+  Serial.println("Connected to " + String(ssid) + " | IP " + WiFi.localIP());
+  delay(250);
+  digitalWrite(LED_BUILTIN, LOW);
+}
+
+void blinkBoardLED()
+{
     delay(250);
     digitalWrite(LED_BUILTIN, HIGH);
     delay(250);
     digitalWrite(LED_BUILTIN, LOW);
-    Serial.print(".");
-  }
-  Serial.println();
-  Serial.print("Connected to ");
-  Serial.print(ssid);
-  Serial.print(" | IP ");
-  Serial.println(WiFi.localIP());
 }
 
 void turnOnAll()
@@ -205,6 +184,21 @@ void turnOnAll()
     if ( String(char_array[i]) != "-" )
     {
       turnOnLetter(String(char_array[i]));
+    }
+  }
+  FastLED.show();
+}
+
+void allToFullBright()
+{
+  int stringLen = letterIndex.length() + 1;
+  char char_array[stringLen];
+  letterIndex.toCharArray(char_array, stringLen);
+  for (int i = 0; i < stringLen - 1; i++)
+  {
+    if ( String(char_array[i]) != "-" )
+    {
+      leds[i].maximizeBrightness();
     }
   }
   FastLED.show();
@@ -252,25 +246,14 @@ void lightLED(int ledIndex, uint32_t colorValue, int duration)
 
 void flickerLeds(int numTimes)
 {
+  turnOnAll();
   for ( int i = 0; i < numTimes; i++)
   {
     flicker();
   }
-}
-
-void allToFullBright()
-{
-  int stringLen = letterIndex.length() + 1;
-  char char_array[stringLen];
-  letterIndex.toCharArray(char_array, stringLen);
-  for (int i = 0; i < stringLen - 1; i++)
-  {
-    if ( String(char_array[i]) != "-" )
-    {
-      leds[i].maximizeBrightness();
-    }
-  }
-  FastLED.show();
+  allToFullBright();
+  fill_solid( leds, NUM_LEDS, CRGB::Black);
+  delay(2000);
 }
 
 void flicker() {
